@@ -10,7 +10,20 @@ const EXPOSE = [
   'content-type',
 ];
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Expose-Headers': EXPOSE.join(', '),
+};
+
 module.exports = async function handler(req, res) {
+  // handle preflight
+  if (req.method === 'OPTIONS') {
+    Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+    return res.status(204).end();
+  }
+
   const path = req.query.path || '';
   const auth = req.headers['authorization'] || '';
 
@@ -18,15 +31,25 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'bad auth' });
   }
 
-  const groqRes = await fetch(`${GROQ_BASE}${path}`, {
-    method: req.method,
-    headers: { Authorization: auth, 'Content-Type': 'application/json' },
-    body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
-  });
+  try {
+    const groqRes = await fetch(`${GROQ_BASE}${path}`, {
+      method: req.method,
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      // body is already parsed by Vercel, re-stringify it
+      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+    });
 
-  // expose rate-limit headers to the browser
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Expose-Headers', EXPOSE.join(', '));
+    Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
 
-  for (const h of EXPOSE) {
-    const val = groqRes.headers.get(h);
+    // forward rate-limit headers
+    for (const h of EXPOSE) {
+      const val = groqRes.headers.get(h);
+      if (val) res.setHeader(h, val);
+    }
+
+    const text = await groqRes.text();
+    res.status(groqRes.status).send(text);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
