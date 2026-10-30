@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/proxy.js": {
+      "runtime": "edge"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/proxy", "destination": "/api/proxy" }
+  ]
+}
