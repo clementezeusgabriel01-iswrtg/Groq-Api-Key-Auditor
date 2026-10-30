@@ -1,16 +1,20 @@
+<!-- Added loading screen, a Docs landing page as the default view, and a Docs/Checker
+     switcher (tabs on desktop, hamburger menu on mobile). Checker logic is unchanged. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Groq Key Auditor</title>
-  <meta name="description" content="Audit Groq API keys across every available model — status, rate limits, and token usage, live." />
+  <meta name="description" content="Audit Groq API keys across every available model: status, rate limits, and token usage, live." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- ══ loader ══ -->
   <div id="loader" aria-hidden="true">
     <div class="loader-mark">
       <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
@@ -25,7 +29,8 @@
   </div>
 
   <div id="app" class="app-hidden">
-    
+
+    <!-- ══ top bar ══ -->
     <header>
       <div class="header-inner">
         <div class="brand">
@@ -48,7 +53,8 @@
         </button>
       </div>
     </header>
-    
+
+    <!-- ══ mobile menu ══ -->
     <div id="mobile-menu" class="mobile-menu hidden">
       <button class="mobile-menu-item" data-view="docs">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2.5a1 1 0 011-1h5.5L13 5v8.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-11z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M9.2 1.5V5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
@@ -62,12 +68,14 @@
     <div id="mobile-menu-scrim" class="mobile-menu-scrim hidden"></div>
 
     <main>
+
+      <!-- ══════════ DOCS / LANDING VIEW ══════════ -->
       <section id="view-docs" class="view">
 
         <div class="hero">
           <p class="hero-kicker">For developers juggling more than one Groq key</p>
           <h1>Know exactly what<br>each key can still do.</h1>
-          <p class="hero-sub">Paste your keys, run the audit, and see every key–model combination's status, rate limit, and remaining token budget — pulled live from Groq, in your browser.</p>
+          <p class="hero-sub">Paste your keys, run the audit, and see every key–model combination's status, rate limit, and remaining token budget, pulled live from Groq, in your browser.</p>
           <div class="hero-actions">
             <button class="btn-primary" id="hero-cta">
               Open the checker
@@ -82,7 +90,7 @@
           <article class="doc-card">
             <div class="doc-card-num">01</div>
             <h3>Model discovery</h3>
-            <p>For every key you paste, the tool calls <code>/v1/models</code> and pulls back the full list of models that key can reach — skipping embedding and Whisper models, since those aren't chat endpoints.</p>
+            <p>For every key you paste, the tool calls <code>/v1/models</code> and pulls back the full list of models that key can reach, skipping embedding and Whisper models, since those aren't chat endpoints.</p>
           </article>
 
           <article class="doc-card">
@@ -94,7 +102,7 @@
           <article class="doc-card">
             <div class="doc-card-num">03</div>
             <h3>Live usage data</h3>
-            <p>Request and token counts come straight from Groq's rate-limit headers, with the response body as a fallback. Nothing is estimated — a dash means the data genuinely wasn't available.</p>
+            <p>Request and token counts come straight from Groq's rate-limit headers, with the response body as a fallback. Nothing is estimated: a dash means the data genuinely wasn't available.</p>
           </article>
 
         </div>
@@ -112,7 +120,7 @@
             </div>
             <div class="status-row">
               <span class="status-chip dead">Dead</span>
-              <p>The request failed outright — revoked key, wrong scope, or the model isn't available to that key.</p>
+              <p>The request failed outright: revoked key, wrong scope, or the model isn't available to that key.</p>
             </div>
           </div>
         </div>
@@ -124,7 +132,7 @@
           </div>
           <div class="doc-block">
             <h3>Export when you're done</h3>
-            <p>Every audit can be copied or downloaded as a CSV — key (masked), model, status, and usage counts — ready to drop into a spreadsheet or a ticket.</p>
+            <p>Every audit can be copied or downloaded as a CSV: key (masked), model, status, and usage counts, ready to drop into a spreadsheet or a ticket.</p>
           </div>
         </div>
 
@@ -246,7 +254,7 @@
     </main>
 
     <footer>
-      <span>Groq Key Auditor — runs entirely in your browser</span>
+      <span>Groq Key Auditor. Runs entirely in your browser.</span>
       <a href="https://console.groq.com/docs" target="_blank" rel="noopener">Groq API docs ↗</a>
     </footer>
   </div>
