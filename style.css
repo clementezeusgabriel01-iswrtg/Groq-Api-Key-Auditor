@@ -245,6 +245,13 @@ header {
 .view { padding-top: 48px; }
 .view.hidden { display: none; }
 
+/* ═══════════════════ section divider (docs page) ═══════════════════ */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 64px 0 56px;
+}
+
 /* ═══════════════════ hero ═══════════════════ */
 .hero { max-width: 620px; margin-bottom: 56px; }
 .hero-kicker {
@@ -425,7 +432,7 @@ header {
 .cta-strip p { font-size: 13px; color: var(--muted); }
 
 /* ═══════════════════ checker: input ═══════════════════ */
-#input-section {
+#input-section, #g-input-section {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -476,7 +483,7 @@ textarea:focus {
 }
 textarea::placeholder { color: var(--subtle); }
 
-#run-btn {
+#run-btn, #g-run-btn {
   align-self: flex-start;
   display: flex;
   align-items: center;
@@ -492,32 +499,32 @@ textarea::placeholder { color: var(--subtle); }
   cursor: pointer;
   transition: background .15s;
 }
-#run-btn:hover  { background: var(--accent-h); }
-#run-btn:active { transform: translateY(1px); }
-#run-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+#run-btn:hover,  #g-run-btn:hover  { background: var(--accent-h); }
+#run-btn:active, #g-run-btn:active { transform: translateY(1px); }
+#run-btn:disabled, #g-run-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
 /* ═══════════════════ progress ═══════════════════ */
-#progress-wrap {
+#progress-wrap, #g-progress-wrap {
   display: flex;
   align-items: center;
   gap: 14px;
   margin-bottom: 22px;
 }
-#progress-track {
+#progress-track, #g-progress-track {
   flex: 1;
   height: 3px;
   background: var(--border);
   border-radius: 99px;
   overflow: hidden;
 }
-#progress-fill {
+#progress-fill, #g-progress-fill {
   height: 100%;
   background: var(--accent);
   border-radius: 99px;
   width: 0%;
   transition: width .25s ease;
 }
-#progress-label {
+#progress-label, #g-progress-label {
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--muted);
@@ -527,7 +534,7 @@ textarea::placeholder { color: var(--subtle); }
 }
 
 /* ═══════════════════ summary cards ═══════════════════ */
-#summary {
+#summary, #g-summary {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
@@ -548,11 +555,11 @@ textarea::placeholder { color: var(--subtle); }
 }
 .card-label { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
 
-@media (max-width: 640px) { #summary { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 400px) { #summary { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { #summary, #g-summary { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 400px) { #summary, #g-summary { grid-template-columns: 1fr; } }
 
 /* ═══════════════════ cors note ═══════════════════ */
-#cors-note {
+#cors-note, #g-cors-note {
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -565,7 +572,7 @@ textarea::placeholder { color: var(--subtle); }
   margin-bottom: 18px;
   line-height: 1.55;
 }
-#cors-note svg { flex-shrink: 0; margin-top: 1px; }
+#cors-note svg, #g-cors-note svg { flex-shrink: 0; margin-top: 1px; }
 
 /* ═══════════════════ export bar ═══════════════════ */
 .export-bar { display: flex; gap: 8px; margin-bottom: 12px; justify-content: flex-end; }
@@ -648,14 +655,14 @@ td.num { text-align: right; color: var(--subtle); font-size: 12px; }
 td.num.has-val { color: var(--text-dim); }
 
 /* ═══════════════════ msg area ═══════════════════ */
-#msg-area {
+#msg-area, #g-msg-area {
   margin-top: 16px;
   font-size: 13px;
   color: var(--muted);
   font-family: var(--mono);
   min-height: 20px;
 }
-#msg-area.error { color: var(--dead); }
+#msg-area.error, #g-msg-area.error { color: var(--dead); }
 
 /* ═══════════════════ footer ═══════════════════ */
 footer {
@@ -674,6 +681,7 @@ footer {
 }
 footer a { color: var(--muted); text-decoration: none; }
 footer a:hover { color: var(--accent-h); }
+.footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
 
 /* ═══════════════════ utility ═══════════════════ */
 .hidden { display: none !important; }
@@ -684,4 +692,5 @@ footer a:hover { color: var(--accent-h); }
   main { padding: 0 16px 80px; }
   .header-inner { padding: 14px 16px; }
   .cta-strip { flex-direction: column; align-items: flex-start; }
-}
+   }
+              
