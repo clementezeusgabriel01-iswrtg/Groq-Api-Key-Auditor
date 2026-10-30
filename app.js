@@ -21,10 +21,12 @@ const ui = {
   statTot:  $('stat-total'),
   statTok:  $('stat-tokens'),
   statKeys: $('stat-keys'),
-  resWrap:  $('results-section'),
-  tbody:    $('results-body'),
-  msg:      $('msg-area'),
-  corsNote: $('cors-note'),
+  resWrap:   $('results-section'),
+  tbody:     $('results-body'),
+  msg:       $('msg-area'),
+  corsNote:  $('cors-note'),
+  copyBtn:   $('copy-btn'),
+  dlBtn:     $('download-btn'),
 };
 
 function parseKeys(raw) {
@@ -196,5 +198,36 @@ async function runAudit() {
   ui.progWrap.classList.add('hidden');
   ui.runBtn.disabled = false;
 }
+
+// build CSV from current table rows
+function buildCSV() {
+  const headers = ['Key', 'Model', 'Status', 'Req Used', 'Tokens Used', 'Req Remaining', 'Tokens Remaining'];
+  const rows = [...ui.tbody.querySelectorAll('tr')].map(tr => {
+    return [...tr.querySelectorAll('td')].map(td => {
+      const text = td.textContent.trim();
+      return `"${text.replace(/"/g, '""')}"`;
+    }).join(',');
+  });
+  return [headers.join(','), ...rows].join('\n');
+}
+
+ui.copyBtn.addEventListener('click', async () => {
+  const csv = buildCSV();
+  await navigator.clipboard.writeText(csv);
+  const orig = ui.copyBtn.textContent;
+  ui.copyBtn.textContent = 'Copied!';
+  setTimeout(() => { ui.copyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M3 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Copy CSV`; }, 2000);
+});
+
+ui.dlBtn.addEventListener('click', () => {
+  const csv = buildCSV();
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `groq-audit-${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
 
 ui.runBtn.addEventListener('click', runAudit);
