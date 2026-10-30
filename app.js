@@ -1,21 +1,30 @@
 const CONCURRENCY = 6;
 const $ = id => document.getElementById(id);
 
+// all Groq calls go through our proxy so rate-limit headers survive
+const PROXY = '/api/proxy';
+function groqFetch(path, key, opts = {}) {
+  return fetch(`${PROXY}?path=${encodeURIComponent(path)}`, {
+    ...opts,
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...opts.headers },
+  });
+}
+
 const ui = {
-  input:     $('keys-input'),
-  runBtn:    $('run-btn'),
-  progWrap:  $('progress-wrap'),
-  progFill:  $('progress-fill'),
-  progLbl:   $('progress-label'),
-  summary:   $('summary'),
-  statAct:   $('stat-active'),
-  statTot:   $('stat-total'),
-  statTok:   $('stat-tokens'),
-  statKeys:  $('stat-keys'),
-  resWrap:   $('results-section'),
-  tbody:     $('results-body'),
-  msg:       $('msg-area'),
-  corsNote:  $('cors-note'),
+  input:    $('keys-input'),
+  runBtn:   $('run-btn'),
+  progWrap: $('progress-wrap'),
+  progFill: $('progress-fill'),
+  progLbl:  $('progress-label'),
+  summary:  $('summary'),
+  statAct:  $('stat-active'),
+  statTot:  $('stat-total'),
+  statTok:  $('stat-tokens'),
+  statKeys: $('stat-keys'),
+  resWrap:  $('results-section'),
+  tbody:    $('results-body'),
+  msg:      $('msg-area'),
+  corsNote: $('cors-note'),
 };
 
 function parseKeys(raw) {
@@ -28,7 +37,7 @@ function maskKey(key) {
   return key.length > 9 ? `${key.slice(0, 6)}...${key.slice(-4)}` : 'INVALID';
 }
 
-// parse an integer header, return null if missing or non-numeric
+// null if header is missing or not a number
 function parseHeader(headers, name) {
   const val = headers.get(name);
   if (!val) return null;
@@ -38,10 +47,7 @@ function parseHeader(headers, name) {
 
 async function getModels(key) {
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/models', {
-      headers: { Authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(6000),
-    });
+    const r = await groqFetch('/models', key, { signal: AbortSignal.timeout(6000) });
     if (!r.ok) return [];
     const data = await r.json();
     return (data.data || [])
@@ -52,12 +58,8 @@ async function getModels(key) {
 
 async function testCombo(key, model, masked) {
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const r = await groqFetch('/chat/completions', key, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: 'Hi' }],
@@ -66,40 +68,31 @@ async function testCombo(key, model, masked) {
       signal: AbortSignal.timeout(12000),
     });
 
-    // try headers first (exposed in some CORS configs)
-    let remReq = parseHeader(r.headers, 'x-ratelimit-remaining-requests');
-    let remTok = parseHeader(r.headers, 'x-ratelimit-remaining-tokens');
-    let limReq = parseHeader(r.headers, 'x-ratelimit-limit-requests');
-    let limTok = parseHeader(r.headers, 'x-ratelimit-limit-tokens');
+    const remReq = parseHeader(r.headers, 'x-ratelimit-remaining-requests');
+    const remTok = parseHeader(r.headers, 'x-ratelimit-remaining-tokens');
+    const limReq = parseHeader(r.headers, 'x-ratelimit-limit-requests');
+    const limTok = parseHeader(r.headers, 'x-ratelimit-limit-tokens');
 
-    let usedReq = null;
+    let usedReq = limReq != null && remReq != null ? limReq - remReq : null;
     let usedTok = null;
 
-    // parse body regardless — gives us usage tokens and may fill gaps
     let body = null;
-    try { body = await r.json(); } catch { /* non-json */ }
+    try { body = await r.json(); } catch {}
 
-    if (body?.usage) {
-      usedTok = body.usage.total_tokens ?? null;
-      // if header gave us limit+remaining, derive used from that
-      if (limTok != null && remTok != null) usedTok = limTok - remTok;
-      if (limReq != null && remReq != null) usedReq = limReq - remReq;
-    }
+    // prefer derived from headers; fall back to usage.total_tokens
+    if (limTok != null && remTok != null) usedTok = limTok - remTok;
+    else if (body?.usage) usedTok = body.usage.total_tokens ?? null;
 
     const active = r.status === 200 || r.status === 429;
     const status = r.status === 429 ? 'Limited' : active ? 'Active' : `HTTP ${r.status}`;
 
-    return {
-      masked, model, active, status,
-      usedReq, usedTok,
-      remReq, remTok,
-    };
+    return { masked, model, active, status, usedReq, usedTok, remReq, remTok };
   } catch {
     return { masked, model, active: false, status: 'Error', usedReq: null, usedTok: null, remReq: null, remTok: null };
   }
 }
 
-// run tasks with bounded concurrency
+// bounded concurrency pool
 async function pool(tasks, onDone) {
   let idx = 0;
   const results = [];
@@ -116,10 +109,7 @@ async function pool(tasks, onDone) {
   return results;
 }
 
-function fmt(val) {
-  // show dash if value is null (unavailable), else format number
-  return val == null ? '—' : val.toLocaleString();
-}
+const fmt = val => val == null ? '—' : val.toLocaleString();
 
 function addRow(res) {
   const cls = res.status === 'Active' ? 'active' : res.status === 'Limited' ? 'limited' : 'dead';
@@ -130,27 +120,25 @@ function addRow(res) {
     <td><span class="badge ${cls}"><span class="dot"></span>${res.status}</span></td>
     <td class="num ${res.usedReq != null ? 'has-val' : ''}">${fmt(res.usedReq)}</td>
     <td class="num ${res.usedTok != null ? 'has-val' : ''}">${fmt(res.usedTok)}</td>
-    <td class="num ${res.remReq != null ? 'has-val' : ''}">${fmt(res.remReq)}</td>
-    <td class="num ${res.remTok != null ? 'has-val' : ''}">${fmt(res.remTok)}</td>
+    <td class="num ${res.remReq  != null ? 'has-val' : ''}">${fmt(res.remReq)}</td>
+    <td class="num ${res.remTok  != null ? 'has-val' : ''}">${fmt(res.remTok)}</td>
   `;
   ui.tbody.appendChild(tr);
 }
 
 function setProgress(done, total) {
-  const pct = total ? (done / total) * 100 : 0;
-  ui.progFill.style.width = `${pct}%`;
-  ui.progLbl.textContent = `${done} / ${total}`;
+  ui.progFill.style.width = total ? `${(done / total) * 100}%` : '0%';
+  ui.progLbl.textContent  = `${done} / ${total}`;
 }
 
 function setMsg(text, isError = false) {
   ui.msg.textContent = text;
-  ui.msg.className = isError ? 'error' : '';
+  ui.msg.className   = isError ? 'error' : '';
 }
 
 async function runAudit() {
   const keys = parseKeys(ui.input.value);
 
-  // reset
   ui.tbody.innerHTML = '';
   ui.summary.classList.add('hidden');
   ui.resWrap.classList.add('hidden');
@@ -159,14 +147,13 @@ async function runAudit() {
   setMsg('');
 
   if (!keys.length) {
-    setMsg('No valid keys found — paste keys starting with gsk_', true);
+    setMsg('No valid keys — paste keys starting with gsk_', true);
     return;
   }
 
   ui.runBtn.disabled = true;
-  setMsg('Fetching available models…');
+  setMsg('Fetching models…');
 
-  // discover all key → model combos
   const tasks = [];
   await Promise.all(keys.map(async key => {
     const masked = maskKey(key);
@@ -175,7 +162,7 @@ async function runAudit() {
   }));
 
   if (!tasks.length) {
-    setMsg('No usable models found — check your keys.', true);
+    setMsg('No usable models — check your keys.', true);
     ui.runBtn.disabled = false;
     return;
   }
@@ -186,7 +173,7 @@ async function runAudit() {
   setProgress(0, tasks.length);
 
   let activeCount = 0;
-  let totalRemTok = 0;
+  let totalRemTok  = 0;
   let headersWorked = false;
 
   const results = await pool(tasks, (res, done, total) => {
@@ -198,11 +185,10 @@ async function runAudit() {
     }
   });
 
-  // summary
-  ui.statAct.textContent   = activeCount;
-  ui.statTot.textContent   = results.length;
-  ui.statTok.textContent   = headersWorked ? totalRemTok.toLocaleString() : '—';
-  ui.statKeys.textContent  = keys.length;
+  ui.statAct.textContent  = activeCount;
+  ui.statTot.textContent  = results.length;
+  ui.statTok.textContent  = headersWorked ? totalRemTok.toLocaleString() : '—';
+  ui.statKeys.textContent = keys.length;
   ui.summary.classList.remove('hidden');
 
   if (!headersWorked) ui.corsNote.classList.remove('hidden');
