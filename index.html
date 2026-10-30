@@ -171,7 +171,7 @@
           <article class="doc-card">
             <div class="doc-card-num">01</div>
             <h3>Model discovery</h3>
-            <p>For every key you paste, the tool calls <code>models.list</code> and pulls back every model that supports <code>generateContent</code> — the Gemini chat models, skipping embedding and image/video-only models.</p>
+            <p>For every key you paste, the tool calls <code>models.list</code> and pulls back every model that supports <code>generateContent</code> — skipping embeddings, TTS, Lyria (music), and Gemma models, since none of those take a plain one-line text test.</p>
           </article>
 
           <article class="doc-card">
@@ -423,12 +423,16 @@
                 </tr>
               </thead>
               <tbody id="g-results-body"></tbody>
-             </table>
+            </table>
           </div>
-         </section>
+        </section>
+
         <div id="g-msg-area"></div>
+
       </section>
+
     </main>
+
     <footer>
       <span>Groq &amp; Gemini Key Auditor. Runs entirely in your browser.</span>
       <span class="footer-links">
