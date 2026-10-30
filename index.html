@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Groq Key Auditor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <header>
+      <div class="brand">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="1" y="1" width="8" height="8" rx="1.5" fill="var(--accent)"/>
+          <rect x="11" y="1" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".4"/>
+          <rect x="1" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".4"/>
+          <rect x="11" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".2"/>
+        </svg>
+        <span>Groq Key Auditor</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="input-section">
+        <div class="field">
+          <label for="keys-input">
+            API Keys
+            <span class="hint">paste one per line</span>
+          </label>
+          <textarea
+            id="keys-input"
+            placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            spellcheck="false"
+            autocomplete="off"
+          ></textarea>
+        </div>
+        <button id="run-btn">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <polygon points="2,1 11,6 2,11" fill="currentColor"/>
+          </svg>
+          Run Audit
+        </button>
+      </section>
+
+      <!-- progress -->
+      <div id="progress-wrap" class="hidden">
+        <div id="progress-track">
+          <div id="progress-fill"></div>
+        </div>
+        <span id="progress-label">0 / 0</span>
+      </div>
+
+      <!-- summary cards -->
+      <div id="summary" class="hidden">
+        <div class="card">
+          <div class="card-val" id="stat-active">—</div>
+          <div class="card-label">Active combos</div>
+        </div>
+        <div class="card">
+          <div class="card-val" id="stat-total">—</div>
+          <div class="card-label">Total tested</div>
+        </div>
+        <div class="card">
+          <div class="card-val" id="stat-tokens">—</div>
+          <div class="card-label">Remaining tokens</div>
+        </div>
+        <div class="card">
+          <div class="card-val" id="stat-keys">—</div>
+          <div class="card-label">Keys audited</div>
+        </div>
+      </div>
+
+      <!-- note about rate limit headers -->
+      <div id="cors-note" class="hidden">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="7" y1="4" x2="7" y2="7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="7" cy="10" r=".8" fill="currentColor"/>
+        </svg>
+        Req/token counts read from response body. If Groq exposes rate-limit headers in your CORS context, they'll appear automatically.
+      </div>
+
+      <!-- results -->
+      <section id="results-section" class="hidden">
+        <div class="table-wrap">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Model</th>
+                <th>Status</th>
+                <th class="num-h">Req used</th>
+                <th class="num-h">Tokens used</th>
+                <th class="num-h">Req remaining</th>
+                <th class="num-h">Tokens remaining</th>
+              </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="msg-area"></div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
