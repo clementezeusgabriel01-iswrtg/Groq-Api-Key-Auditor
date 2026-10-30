@@ -1,5 +1,73 @@
+// Added the loader boot sequence and view routing below (boot, routing).
+// Everything from parseKeys onward is the original audit logic, untouched.
+
 const CONCURRENCY = 6;
 const $ = id => document.getElementById(id);
+
+/* ═══════════════════ loader ═══════════════════ */
+(function boot() {
+  const loader = $('loader');
+  const label  = $('loader-label');
+  const app    = $('app');
+  const steps  = ['connecting to api.groq.com', 'loading interface', 'ready'];
+  let i = 0;
+  const tick = setInterval(() => {
+    i++;
+    if (i < steps.length) { label.textContent = steps[i]; return; }
+    clearInterval(tick);
+    loader.classList.add('loader-done');
+    app.classList.remove('app-hidden');
+    setTimeout(() => loader.remove(), 450);
+  }, 360);
+})();
+
+/* ═══════════════════ view routing (docs / checker) ═══════════════════ */
+(function routing() {
+  const views = {
+    docs:    $('view-docs'),
+    checker: $('view-checker'),
+  };
+  const desktopTabs = [...document.querySelectorAll('#desktop-tabs .tab-btn')];
+  const mobileItems = [...document.querySelectorAll('.mobile-menu-item')];
+  const hamburger   = $('hamburger-btn');
+  const mobileMenu  = $('mobile-menu');
+  const scrim       = $('mobile-menu-scrim');
+
+  function showView(name) {
+    Object.entries(views).forEach(([key, el]) => el.classList.toggle('hidden', key !== name));
+    desktopTabs.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    mobileItems.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    closeMenu();
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  function openMenu() {
+    mobileMenu.classList.remove('hidden');
+    scrim.classList.remove('hidden');
+    hamburger.classList.add('open');
+    hamburger.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu() {
+    mobileMenu.classList.add('hidden');
+    scrim.classList.add('hidden');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+  }
+
+  hamburger.addEventListener('click', () => {
+    mobileMenu.classList.contains('hidden') ? openMenu() : closeMenu();
+  });
+  scrim.addEventListener('click', closeMenu);
+
+  [...desktopTabs, ...mobileItems].forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.dataset.view));
+  });
+
+  $('hero-cta').addEventListener('click', () => showView('checker'));
+  $('hero-cta-bottom').addEventListener('click', () => showView('checker'));
+
+  showView('docs'); // landing/doc page is always first
+})();
 
 // all Groq calls go through our proxy so rate-limit headers survive
 const PROXY = '/api/proxy';
