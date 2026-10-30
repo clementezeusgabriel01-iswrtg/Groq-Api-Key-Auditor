@@ -4,124 +4,251 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Groq Key Auditor</title>
+  <meta name="description" content="Audit Groq API keys across every available model — status, rate limits, and token usage, live." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
+  <div id="loader" aria-hidden="true">
+    <div class="loader-mark">
+      <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+        <rect x="1" y="1" width="8" height="8" rx="1.5" fill="var(--accent)"/>
+        <rect x="11" y="1" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".45"/>
+        <rect x="1" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".45"/>
+        <rect x="11" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".2"/>
+      </svg>
+    </div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+    <div class="loader-label" id="loader-label">connecting to api.groq.com</div>
+  </div>
 
+  <div id="app" class="app-hidden">
+    
     <header>
-      <div class="brand">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <rect x="1" y="1" width="8" height="8" rx="1.5" fill="var(--accent)"/>
-          <rect x="11" y="1" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".4"/>
-          <rect x="1" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".4"/>
-          <rect x="11" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".2"/>
-        </svg>
-        <span>Groq Key Auditor</span>
+      <div class="header-inner">
+        <div class="brand">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="1" width="8" height="8" rx="1.5" fill="var(--accent)"/>
+            <rect x="11" y="1" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".45"/>
+            <rect x="1" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".45"/>
+            <rect x="11" y="11" width="8" height="8" rx="1.5" fill="var(--accent)" opacity=".2"/>
+          </svg>
+          <span>Groq Key Auditor</span>
+        </div>
+
+        <nav class="tabs" id="desktop-tabs">
+          <button class="tab-btn" data-view="docs">Docs</button>
+          <button class="tab-btn" data-view="checker">Checker</button>
+        </nav>
+
+        <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </header>
+    
+    <div id="mobile-menu" class="mobile-menu hidden">
+      <button class="mobile-menu-item" data-view="docs">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2.5a1 1 0 011-1h5.5L13 5v8.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-11z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M9.2 1.5V5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        Docs
+      </button>
+      <button class="mobile-menu-item" data-view="checker">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="12" height="11" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M4.8 6.3h6.4M4.8 9h4.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Checker
+      </button>
+    </div>
+    <div id="mobile-menu-scrim" class="mobile-menu-scrim hidden"></div>
 
     <main>
-      <section id="input-section">
-        <div class="field">
-          <label for="keys-input">
-            API Keys
-            <span class="hint">paste one per line</span>
-          </label>
-          <textarea
-            id="keys-input"
-            placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            spellcheck="false"
-            autocomplete="off"
-          ></textarea>
+      <section id="view-docs" class="view">
+
+        <div class="hero">
+          <p class="hero-kicker">For developers juggling more than one Groq key</p>
+          <h1>Know exactly what<br>each key can still do.</h1>
+          <p class="hero-sub">Paste your keys, run the audit, and see every key–model combination's status, rate limit, and remaining token budget — pulled live from Groq, in your browser.</p>
+          <div class="hero-actions">
+            <button class="btn-primary" id="hero-cta">
+              Open the checker
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h7M6.5 2.5L10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <a class="btn-ghost" href="#how-it-works">How it works</a>
+          </div>
         </div>
-        <button id="run-btn">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <polygon points="2,1 11,6 2,11" fill="currentColor"/>
+
+        <div class="doc-grid">
+
+          <article class="doc-card">
+            <div class="doc-card-num">01</div>
+            <h3>Model discovery</h3>
+            <p>For every key you paste, the tool calls <code>/v1/models</code> and pulls back the full list of models that key can reach — skipping embedding and Whisper models, since those aren't chat endpoints.</p>
+          </article>
+
+          <article class="doc-card">
+            <div class="doc-card-num">02</div>
+            <h3>Concurrent testing</h3>
+            <p>Each key–model pair gets a one-token test completion. Up to six run at once through a bounded worker pool, so a stack of keys clears in seconds instead of minutes.</p>
+          </article>
+
+          <article class="doc-card">
+            <div class="doc-card-num">03</div>
+            <h3>Live usage data</h3>
+            <p>Request and token counts come straight from Groq's rate-limit headers, with the response body as a fallback. Nothing is estimated — a dash means the data genuinely wasn't available.</p>
+          </article>
+
+        </div>
+
+        <div class="status-key" id="how-it-works">
+          <h2>Reading the results</h2>
+          <div class="status-rows">
+            <div class="status-row">
+              <span class="status-chip active">Active</span>
+              <p>The key authenticated and the model responded with a 200. It's usable right now.</p>
+            </div>
+            <div class="status-row">
+              <span class="status-chip limited">Limited</span>
+              <p>The key is valid but currently rate-limited (429). It'll work again once the window resets.</p>
+            </div>
+            <div class="status-row">
+              <span class="status-chip dead">Dead</span>
+              <p>The request failed outright — revoked key, wrong scope, or the model isn't available to that key.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-two-col">
+          <div class="doc-block">
+            <h3>Nothing leaves your session</h3>
+            <p>Keys are sent straight to Groq's API through a thin proxy that exists only to forward rate-limit headers browsers normally strip. Nothing is logged, stored, or sent anywhere else. Close the tab and the keys are gone.</p>
+          </div>
+          <div class="doc-block">
+            <h3>Export when you're done</h3>
+            <p>Every audit can be copied or downloaded as a CSV — key (masked), model, status, and usage counts — ready to drop into a spreadsheet or a ticket.</p>
+          </div>
+        </div>
+
+        <div class="cta-strip">
+          <div>
+            <h3>Ready to audit a batch of keys?</h3>
+            <p>Takes one paste and a click. Results stream in live.</p>
+          </div>
+          <button class="btn-primary" id="hero-cta-bottom">
+            Open the checker
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h7M6.5 2.5L10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ══════════ CHECKER VIEW ══════════ -->
+      <section id="view-checker" class="view hidden">
+
+        <section id="input-section">
+          <div class="field">
+            <label for="keys-input">
+              API keys
+              <span class="hint">one per line</span>
+            </label>
+            <textarea
+              id="keys-input"
+              placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              spellcheck="false"
+              autocomplete="off"
+            ></textarea>
+          </div>
+          <button id="run-btn">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <polygon points="2,1 11,6 2,11" fill="currentColor"/>
+            </svg>
+            Run audit
+          </button>
+        </section>
+
+        <!-- progress -->
+        <div id="progress-wrap" class="hidden">
+          <div id="progress-track">
+            <div id="progress-fill"></div>
+          </div>
+          <span id="progress-label">0 / 0</span>
+        </div>
+
+        <!-- summary cards -->
+        <div id="summary" class="hidden">
+          <div class="card">
+            <div class="card-val" id="stat-active">—</div>
+            <div class="card-label">Active combos</div>
+          </div>
+          <div class="card">
+            <div class="card-val" id="stat-total">—</div>
+            <div class="card-label">Total tested</div>
+          </div>
+          <div class="card">
+            <div class="card-val" id="stat-tokens">—</div>
+            <div class="card-label">Remaining tokens</div>
+          </div>
+          <div class="card">
+            <div class="card-val" id="stat-keys">—</div>
+            <div class="card-label">Keys audited</div>
+          </div>
+        </div>
+
+        <!-- note about rate limit headers -->
+        <div id="cors-note" class="hidden">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
+            <line x1="7" y1="4" x2="7" y2="7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="10" r=".8" fill="currentColor"/>
           </svg>
-          Run Audit
-        </button>
+          Req/token counts read from response body. If Groq exposes rate-limit headers in your CORS context, they'll appear automatically.
+        </div>
+
+        <!-- results -->
+        <section id="results-section" class="hidden">
+          <div class="export-bar">
+            <button id="copy-btn" class="export-btn">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M3 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+              Copy CSV
+            </button>
+            <button id="download-btn" class="export-btn">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M6.5 1v7M4 6l2.5 2.5L9 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M1 10v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+              Download CSV
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table id="results-table">
+              <thead>
+                <tr>
+                  <th>Key</th>
+                  <th>Model</th>
+                  <th>Status</th>
+                  <th class="num-h">Req used</th>
+                  <th class="num-h">Tokens used</th>
+                  <th class="num-h">Req remaining</th>
+                  <th class="num-h">Tokens remaining</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div id="msg-area"></div>
+
       </section>
 
-      <!-- progress -->
-      <div id="progress-wrap" class="hidden">
-        <div id="progress-track">
-          <div id="progress-fill"></div>
-        </div>
-        <span id="progress-label">0 / 0</span>
-      </div>
-
-      <!-- summary cards -->
-      <div id="summary" class="hidden">
-        <div class="card">
-          <div class="card-val" id="stat-active">—</div>
-          <div class="card-label">Active combos</div>
-        </div>
-        <div class="card">
-          <div class="card-val" id="stat-total">—</div>
-          <div class="card-label">Total tested</div>
-        </div>
-        <div class="card">
-          <div class="card-val" id="stat-tokens">—</div>
-          <div class="card-label">Remaining tokens</div>
-        </div>
-        <div class="card">
-          <div class="card-val" id="stat-keys">—</div>
-          <div class="card-label">Keys audited</div>
-        </div>
-      </div>
-
-      <!-- note about rate limit headers -->
-      <div id="cors-note" class="hidden">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="7" y1="4" x2="7" y2="7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="7" cy="10" r=".8" fill="currentColor"/>
-        </svg>
-        Req/token counts read from response body. If Groq exposes rate-limit headers in your CORS context, they'll appear automatically.
-      </div>
-
-      <!-- results -->
-      <section id="results-section" class="hidden">
-        <div class="export-bar">
-          <button id="copy-btn" class="export-btn">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" stroke-width="1.3"/>
-              <path d="M3 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            </svg>
-            Copy CSV
-          </button>
-          <button id="download-btn" class="export-btn">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M6.5 1v7M4 6l2.5 2.5L9 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M1 10v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            </svg>
-            Download CSV
-          </button>
-        </div>
-        <div class="table-wrap">
-          <table id="results-table">
-            <thead>
-              <tr>
-                <th>Key</th>
-                <th>Model</th>
-                <th>Status</th>
-                <th class="num-h">Req used</th>
-                <th class="num-h">Tokens used</th>
-                <th class="num-h">Req remaining</th>
-                <th class="num-h">Tokens remaining</th>
-              </tr>
-            </thead>
-            <tbody id="results-body"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <div id="msg-area"></div>
     </main>
+
+    <footer>
+      <span>Groq Key Auditor — runs entirely in your browser</span>
+      <a href="https://console.groq.com/docs" target="_blank" rel="noopener">Groq API docs ↗</a>
+    </footer>
   </div>
 
   <script src="app.js"></script>
